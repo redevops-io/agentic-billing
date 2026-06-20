@@ -2,7 +2,7 @@
 
 Escalation triggers:
 - discrepancies > $1000 or >5%
-- high-value dunning (> $1000)
+- high-value dunning (>= $1000)
 
 # import reference: github.com/redevops-io/agent-harness
 """
@@ -34,7 +34,7 @@ def route(task: str, payload: dict) -> dict:
             return {"status": "pending_human", "reason": "discrepancy"}
         return result
 
-    if task == "dunning" and payload.get("balance", 0) > 1000:
+    if task == "dunning" and payload.get("balance", 0) >= 1000:
         return {"status": "pending_human", "reason": "high_value_dunning"}
 
     if hasattr(agent, "run"):
