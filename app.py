@@ -576,9 +576,100 @@ def activity() -> JSONResponse:
     return JSONResponse(fetch_activity())
 
 
+# --- Context Runtime: live decisions over a synthetic account stream ----------
+# Real tenant when the context-runtime package is installed; graceful fallback
+# otherwise so the demo never breaks. A synthetic stream shows Context Runtime
+# deciding which context to pull LIVE, so the dashboard updates while browsing.
+import asyncio as _cr_asyncio
+import json as _cr_json
+from datetime import datetime as _cr_dt, timezone as _cr_tz
+from fastapi.responses import StreamingResponse as _CRStreamingResponse
+
+try:
+    from context_runtime.integrations.agentic_billing import (  # type: ignore
+        AgenticBillingTenant as _CRTenant, agentic_billing_bucket as _cr_bucket,
+    )
+    _CR = _CRTenant(epsilon=0.15)
+except Exception:  # noqa: BLE001
+    _CR = None
+
+    def _cr_bucket(_text):  # type: ignore
+        return "general"
+
+_CR_SYNTH = [
+    'ACME Corp overdue 45 days',
+    'Globex subscription at churn risk',
+    'Initech paid early last quarter',
+    'Umbrella invoices past due',
+]
+
+
+def _cr_decide(text: str) -> dict:
+    try:
+        bucket = _cr_bucket(text)
+    except Exception:  # noqa: BLE001
+        bucket = "general"
+    if _CR is not None:
+        try:
+            try:
+                arm = _CR.choose(text, bucket=bucket)
+            except TypeError:
+                arm = _CR.choose(text)
+            try:
+                _CR.record_outcome(text, 5.0)
+            except Exception:  # noqa: BLE001
+                pass
+            return {"bucket": str(bucket), "bundle": getattr(arm, "key", str(arm))}
+        except Exception:  # noqa: BLE001
+            pass
+    return {"bucket": str(bucket), "bundle": "(context runtime offline)"}
+
+_CR_LIVE_FEED = """
+<div id="cr-live" style="position:fixed;right:16px;bottom:16px;width:340px;max-height:58vh;overflow:auto;background:#17171a;border:1px solid #2f2f33;border-radius:12px;padding:12px;font:13px/1.45 Roboto,system-ui,sans-serif;color:#e4e2e6;z-index:9999;box-shadow:0 10px 34px rgba(0,0,0,.45)">
+  <div style="color:#4fd1c5;font-weight:600;margin-bottom:8px">Context Runtime — live decisions</div>
+  <div id="cr-feed" style="color:#9b99a1">connecting…</div>
+</div>
+<script>
+(function(){
+  var feed=document.getElementById('cr-feed');var first=true;
+  try{
+    var es=new EventSource('/api/stream');
+    es.onmessage=function(e){
+      if(first){feed.innerHTML='';first=false;}
+      var d=JSON.parse(e.data);var row=document.createElement('div');
+      row.style.cssText='border-top:1px solid #2f2f33;padding:7px 0';
+      row.innerHTML='<div style="color:#9b99a1;font-size:11px">'+d.ts+' \u00b7 <b style="color:#c7c5ca">'+d.bucket+'</b></div>'+
+        '<div style="margin:2px 0">'+d.input+'</div>'+
+        '<div style="color:#4fd1c5">\u2192 pulled context: <b>'+d.bundle+'</b></div>';
+      feed.insertBefore(row,feed.firstChild);
+      while(feed.children.length>8) feed.removeChild(feed.lastChild);
+    };
+    es.onerror=function(){ if(first){feed.textContent='(live stream unavailable)';} };
+  }catch(err){feed.textContent='(live stream unavailable)';}
+})();
+</script>
+"""
+
+
+@app.get("/api/stream")
+async def cr_stream() -> _CRStreamingResponse:
+    async def _gen():
+        i = 0
+        while True:
+            text = _CR_SYNTH[i % len(_CR_SYNTH)]
+            i += 1
+            d = _cr_decide(text)
+            evt = {"input": text, "ts": _cr_dt.now(_cr_tz.utc).strftime("%H:%M:%S"), **d}
+            yield f"data: {_cr_json.dumps(evt)}\n\n"
+            await _cr_asyncio.sleep(2.5)
+    return _CRStreamingResponse(_gen(), media_type="text/event-stream")
+
+
 @app.get("/", response_class=HTMLResponse)
 def index() -> str:
-    return render(fetch_activity())
+    page = render(fetch_activity())
+    return (page.replace("</body>", _CR_LIVE_FEED + "</body>")
+            if "</body>" in page else page + _CR_LIVE_FEED)
 
 
 @app.post("/agent/run")
