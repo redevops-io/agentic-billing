@@ -15,7 +15,7 @@ Usage:
 Env knobs:
     LAGO_API_CONTAINER  docker container name of the Lago Rails app (default: lago-api)
     LAGO_API_URL        REST base used for the post-seed verification (default: http://localhost:3000)
-    LAGO_FRONT_URL      Lago UI link baked into the .env (default: http://192.168.40.8:80)
+    LAGO_FRONT_URL      Lago UI link baked into the .env (default: http://localhost:80)
 """
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ ENV_OUT = HERE / ".env"
 
 CONTAINER = os.environ.get("LAGO_API_CONTAINER", "lago-api")
 LAGO_API_URL = os.environ.get("LAGO_API_URL", "http://localhost:3000")
-LAGO_FRONT_URL = os.environ.get("LAGO_FRONT_URL", "http://192.168.40.8:80")
+LAGO_FRONT_URL = os.environ.get("LAGO_FRONT_URL", "http://localhost:80")
 
 # `sudo` is required to talk to the docker socket on this host.
 DOCKER = ["sudo", "docker"]

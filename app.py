@@ -51,7 +51,7 @@ if _ENV_FILE.exists():
 
 LAGO_API_URL = os.environ.get("LAGO_API_URL", "http://localhost:3000").rstrip("/")
 LAGO_API_KEY = os.environ.get("LAGO_API_KEY", "")
-LAGO_FRONT_URL = os.environ.get("LAGO_FRONT_URL", "http://192.168.40.8:80").rstrip("/")
+LAGO_FRONT_URL = os.environ.get("LAGO_FRONT_URL", "http://localhost:80").rstrip("/")
 PORT = int(os.environ.get("PORT", "8201"))
 
 TENANT = "Summit Roofing Co."
