@@ -1,3 +1,14 @@
+> ### Reference application for [Context Runtime](https://github.com/redevops-io/context-runtime)
+>
+> A focused AI system for **billing & collections**. Context Runtime ships a tenant that learns **which usage/invoice/dunning signals to pull before a credit or collections action** — in its offline benchmark the learned policy scores **4.122 vs 2.442** against a full-stack baseline ([`examples/agentic_billing.py`](https://github.com/redevops-io/context-runtime/blob/main/examples/agentic_billing.py)).
+>
+> ```
+> Context Runtime  →  ReDevOps RAG  →  Sidekick  →  Application logic
+> ```
+> One of the [ReDevOps](https://github.com/redevops-io) reference applications built on Context Runtime.
+
+---
+
 # agentic-billing — agent layer + dashboard over a real Lago core
 
 The **first** "agentic module on a real OSS core" vertical slice, and the reference
