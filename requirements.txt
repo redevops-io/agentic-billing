@@ -1,5 +1,4 @@
 fastapi>=0.110
 uvicorn[standard]>=0.29
 httpx>=0.27
-# Context Runtime tenant (optional — app falls back gracefully if absent)
 context-runtime @ https://github.com/redevops-io/context-runtime/archive/refs/heads/main.tar.gz
